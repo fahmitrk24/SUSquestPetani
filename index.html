@@ -275,7 +275,9 @@
                     const selectedOption = document.querySelector(`input[name="q${questionIndex}"]:checked`);
                     const value = parseInt(selectedOption.value);
                     
-                    answers.push(value);
+                    // Mengambil label teks, bukan angka
+                    const labelText = getLabel(value);
+                    answers.push(labelText);
 
                     if (questionType === 'odd') {
                         score += (value - 1);
