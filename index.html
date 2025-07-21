@@ -296,11 +296,7 @@
                 try {
                     await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        // mode: 'no-cors', // <-- THIS LINE WAS THE PROBLEM AND HAS BEEN REMOVED
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(submissionData)
+                        body: JSON.stringify(submissionData),
                     });
                 } catch (error) {
                     console.error('Error submitting to Google Sheets:', error);
