@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuesioner Usability - Petani Cerdas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4;
+        }
+        .form-container, .result-card, #login-container {
+            transition: all 0.5s ease-in-out;
+        }
+        .score-circle {
+            transition: all 0.5s ease-in-out;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+        }
+        .hidden-fade {
+            opacity: 0;
+            visibility: hidden;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.5s ease-in-out;
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+
+        <!-- Google Login Container -->
+        <div id="login-container" class="form-container">
+             <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-green-200 text-center">
+                <h1 class="text-3xl md:text-4xl font-bold text-green-800">Selamat Datang</h1>
+                <p class="mt-2 text-gray-600 mb-6">Untuk memastikan validitas data, silakan login dengan akun Google Anda untuk melanjutkan.</p>
+                <div id="g_id_onload"
+                     data-client_id="243170039839-vv0jnemmu8mj93jhmdpv1lsu8sqdgvbj.apps.googleusercontent.com"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
+            </div>
+        </div>
+
+        <!-- User Info Form Container - Hidden by default -->
+        <div id="user-info-container" class="hidden-fade form-container">
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-green-200">
+                <div class="text-center mb-6">
+                    <h1 class="text-3xl md:text-4xl font-bold text-green-800">Data Responden</h1>
+                    <p class="mt-2 text-gray-600">Nama dan Email Anda sudah terisi otomatis. Silakan lengkapi sisanya.</p>
+                </div>
+                <form id="user-info-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                            <input type="text" id="nama" name="nama" required readonly class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm">
+                        </div>
+                         <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="email" name="email" required readonly class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="nim" class="block text-sm font-medium text-gray-700">NIM</label>
+                            <input type="text" id="nim" name="nim" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="angkatan" class="block text-sm font-medium text-gray-700">Angkatan</label>
+                            <select id="angkatan" name="angkatan" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                                <option value="">Pilih Angkatan</option>
+                                <option value="2024">Angkatan 24</option>
+                                <option value="2023">Angkatan 23</option>
+                                <option value="2022">Angkatan 22</option>
+                                <option value="2021">Angkatan 21</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <button type="submit" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-300 shadow-md">
+                            Lanjutkan ke Kuesioner
+                        </button>
+                    </div>
+                </form>
+                <div id="user-info-error" class="hidden mt-4 text-center text-red-600 font-semibold bg-red-100 p-3 rounded-lg">
+                    Harap isi NIM dan Angkatan.
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content (SUS Questionnaire) - Hidden by default -->
+        <div id="main-content-container" class="hidden-fade form-container">
+            <!-- Form Kuesioner -->
+            <form id="sus-form" class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-green-200">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl md:text-4xl font-bold text-green-800">Kuesioner System Usability Scale (SUS)</h1>
+                    <p class="mt-2 text-gray-600">Berdasarkan pengalaman Anda menggunakan aplikasi, berikan penilaian Anda.</p>
+                     <a href="https://fahmitrk24.github.io/Agromonitorp/" target="_blank" rel="noopener noreferrer" class="text-sm text-green-600 hover:underline mt-2 inline-block">
+                        Buka kembali aplikasi "Petani Cerdas"
+                    </a>
+                </div>
+                <div class="space-y-6">
+                    <div id="questions-container" class="space-y-6">
+                        <!-- Pertanyaan akan di-generate oleh JavaScript -->
+                    </div>
+                </div>
+                <div class="mt-10 text-center">
+                    <button type="submit" id="submit-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-300 shadow-md w-64 text-center">
+                        Kirim Jawaban & Lihat Skor
+                    </button>
+                </div>
+            </form>
+            <div id="sus-error-message" class="hidden mt-4 text-center text-red-600 font-semibold bg-red-100 p-3 rounded-lg">
+                Harap jawab semua pertanyaan sebelum mengirim.
+            </div>
+        </div>
+
+        <!-- Hasil Skor -->
+        <div id="result-card" class="hidden-fade result-card mt-8 bg-white p-6 md:p-8 rounded-xl shadow-lg border border-green-200">
+            <!-- Hasil akan ditampilkan di sini -->
+        </div>
+    </div>
+
+    <script>
+        // --- URL Google Apps Script Anda ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAoT9NKYqaJ4QCgk9pvAWlg19yk7OgLwQWWifVGbvsNRW-jch5l3N-mLF4UHkFDrVE/exec';
+
+        // --- Global Variables ---
+        let respondentData = {};
+
+        // --- Helper function to parse JWT ---
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- Google Sign-In Callback ---
+        function handleCredentialResponse(response) {
+            const credential = response.credential;
+            const profile = parseJwt(credential);
+
+            if (profile) {
+                // Pre-fill form with Google data
+                document.getElementById('nama').value = profile.name;
+                document.getElementById('email').value = profile.email;
+
+                // Store Google data
+                respondentData.nama = profile.name;
+                respondentData.email = profile.email;
+
+                // Hide login and show user info form
+                document.getElementById('login-container').classList.add('hidden-fade');
+                document.getElementById('user-info-container').classList.remove('hidden-fade');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Elements ---
+            const loginContainer = document.getElementById('login-container');
+            const userInfoContainer = document.getElementById('user-info-container');
+            const userInfoForm = document.getElementById('user-info-form');
+            const userInfoError = document.getElementById('user-info-error');
+            
+            const mainContentContainer = document.getElementById('main-content-container');
+            const susForm = document.getElementById('sus-form');
+            const susErrorMessage = document.getElementById('sus-error-message');
+            const submitButton = document.getElementById('submit-button');
+            
+            const resultCard = document.getElementById('result-card');
+            const questionsContainer = document.getElementById('questions-container');
+
+            // --- User Info Form Logic ---
+            userInfoForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (userInfoForm.checkValidity()) {
+                    userInfoError.classList.add('hidden');
+                    
+                    respondentData.nim = document.getElementById('nim').value;
+                    respondentData.angkatan = document.getElementById('angkatan').value;
+                    
+                    userInfoContainer.classList.add('hidden-fade');
+                    mainContentContainer.classList.remove('hidden-fade');
+
+                } else {
+                    userInfoError.classList.remove('hidden');
+                }
+            });
+
+            // --- SUS Logic ---
+            const questions = [
+                { text: "Saya rasa saya akan sering menggunakan sistem ini.", type: 'odd' },
+                { text: "Menurut saya, sistem ini terlalu rumit.", type: 'even' },
+                { text: "Saya pikir sistem ini mudah digunakan.", type: 'odd' },
+                { text: "Saya rasa saya akan membutuhkan bantuan teknis untuk bisa menggunakan sistem ini.", type: 'even' },
+                { text: "Menurut saya, berbagai fungsi dalam sistem ini terintegrasi dengan baik.", type: 'odd' },
+                { text: "Menurut saya, ada terlalu banyak hal yang tidak konsisten di sistem ini.", type: 'even' },
+                { text: "Saya bayangkan kebanyakan orang akan belajar menggunakan sistem ini dengan sangat cepat.", type: 'odd' },
+                { text: "Menurut saya, sistem ini sangat merepotkan saat digunakan.", type: 'even' },
+                { text: "Saya merasa sangat percaya diri saat menggunakan sistem ini.", type: 'odd' },
+                { text: "Saya perlu mempelajari banyak hal terlebih dahulu sebelum bisa menggunakan sistem ini.", type: 'even' }
+            ];
+
+            // Generate questions HTML
+            questions.forEach((q, index) => {
+                const questionIndex = index + 1;
+                const questionElement = document.createElement('div');
+                questionElement.className = 'p-4 rounded-lg border border-gray-200 hover:bg-gray-50';
+                
+                let optionsHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    optionsHTML += `
+                        <label for="q${questionIndex}-${i}" class="flex items-center justify-start cursor-pointer p-2 rounded hover:bg-green-50">
+                            <input type="radio" id="q${questionIndex}-${i}" name="q${questionIndex}" value="${i}" required class="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300">
+                            <span class="ml-3 text-sm">${getLabel(i)}</span>
+                        </label>
+                    `;
+                }
+
+                questionElement.innerHTML = `
+                    <p class="font-medium text-gray-700 mb-2">${questionIndex}. ${q.text}</p>
+                    <div class="space-y-1">${optionsHTML}</div>
+                `;
+                questionsContainer.appendChild(questionElement);
+            });
+            
+            function getLabel(value) {
+                switch(value) {
+                    case 1: return 'Sangat Tidak Setuju';
+                    case 2: return 'Tidak Setuju';
+                    case 3: return 'Netral';
+                    case 4: return 'Setuju';
+                    case 5: return 'Sangat Setuju';
+                }
+            }
+
+            susForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                susErrorMessage.classList.add('hidden');
+
+                if (!susForm.checkValidity()) {
+                    susErrorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                submitButton.disabled = true;
+                submitButton.innerHTML = `<svg class="spinner -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Mengirim...`;
+
+                let score = 0;
+                const answers = [];
+
+                for (let i = 0; i < questions.length; i++) {
+                    const questionIndex = i + 1;
+                    const questionType = questions[i].type;
+                    const selectedOption = document.querySelector(`input[name="q${questionIndex}"]:checked`);
+                    const value = parseInt(selectedOption.value);
+                    
+                    answers.push(value);
+
+                    if (questionType === 'odd') {
+                        score += (value - 1);
+                    } else {
+                        score += (5 - value);
+                    }
+                }
+
+                const finalScore = score * 2.5;
+                
+                const submissionData = {
+                    ...respondentData,
+                    susScore: finalScore,
+                    answers: answers
+                };
+
+                try {
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(submissionData)
+                    });
+                } catch (error) {
+                    console.error('Error submitting to Google Sheets:', error);
+                } finally {
+                    displayResult(finalScore);
+                }
+            });
+
+            function displayResult(score) {
+                mainContentContainer.classList.add('hidden-fade');
+                resultCard.classList.remove('hidden-fade');
+                resultCard.innerHTML = `
+                    <h2 class="text-2xl font-bold text-center text-green-800 mb-2">Terima Kasih!</h2>
+                    <p class="text-center text-gray-600 mb-6">Jawaban Anda telah berhasil direkam. Berikut adalah hasil skor usability-nya.</p>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                        <div class="relative">
+                            <svg class="transform -rotate-90 w-32 h-32">
+                                <circle cx="64" cy="64" r="54" stroke="currentColor" stroke-width="10" class="text-gray-200" fill="transparent"/>
+                                <circle id="score-circle" cx="64" cy="64" r="54" stroke="currentColor" stroke-width="10" class="score-circle" fill="transparent" stroke-linecap="round"/>
+                            </svg>
+                            <span id="score-text" class="absolute inset-0 flex items-center justify-center text-3xl font-bold text-green-800">0</span>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <p class="text-lg text-gray-600">Skor SUS Anda adalah:</p>
+                            <p id="final-score" class="text-5xl font-bold text-green-700">0</p>
+                            <div id="score-adjective" class="mt-2 text-xl font-semibold bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block"></div>
+                            <p id="score-percentile" class="mt-2 text-sm text-gray-500"></p>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center text-sm text-gray-500">
+                        <p>Skor SUS di atas 68 dianggap di atas rata-rata. Skor di atas 80.3 dianggap sangat baik.</p>
+                    </div>`;
+
+                const scoreCircle = document.getElementById('score-circle');
+                const scoreText = document.getElementById('score-text');
+                const finalScoreEl = document.getElementById('final-score');
+                const scoreAdjective = document.getElementById('score-adjective');
+                const scorePercentile = document.getElementById('score-percentile');
+
+                let currentScore = 0;
+                const interval = setInterval(() => {
+                    if (currentScore >= score) {
+                        clearInterval(interval);
+                        scoreText.textContent = score.toFixed(1);
+                        finalScoreEl.textContent = score.toFixed(1);
+                    } else {
+                        currentScore = Math.min(currentScore + 1, score);
+                        scoreText.textContent = Math.round(currentScore);
+                        finalScoreEl.textContent = Math.round(currentScore);
+                    }
+                }, 15);
+                
+                let adjective = '';
+                let percentile = '';
+                let colorClass = 'text-red-500';
+
+                if (score > 84.1) {
+                    adjective = 'Luar Biasa (A+)'; percentile = 'Termasuk dalam 1% teratas'; colorClass = 'text-green-500';
+                } else if (score > 80.3) {
+                    adjective = 'Sangat Baik (A)'; percentile = 'Termasuk dalam 10% teratas'; colorClass = 'text-green-500';
+                } else if (score > 74) {
+                    adjective = 'Baik (B)'; percentile = 'Termasuk dalam 20% teratas'; colorClass = 'text-teal-500';
+                } else if (score > 68) {
+                    adjective = 'Cukup Baik (C)'; percentile = 'Di atas rata-rata'; colorClass = 'text-cyan-500';
+                } else if (score > 52) {
+                    adjective = 'Cukup (D)'; percentile = 'Di bawah rata-rata'; colorClass = 'text-yellow-500';
+                } else if (score > 25) {
+                    adjective = 'Buruk (F)'; percentile = 'Termasuk dalam 15% terbawah'; colorClass = 'text-orange-500';
+                } else {
+                    adjective = 'Sangat Buruk (F)'; percentile = 'Sangat tidak direkomendasikan'; colorClass = 'text-red-500';
+                }
+
+                scoreAdjective.textContent = adjective;
+                scorePercentile.textContent = percentile;
+                
+                scoreCircle.classList.add(colorClass);
+
+                const radius = scoreCircle.r.baseVal.value;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference - (score / 100) * circumference;
+                scoreCircle.style.strokeDashoffset = offset;
+            }
+        });
+    </script>
+</body>
+</html>
