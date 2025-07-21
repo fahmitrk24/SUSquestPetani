@@ -275,7 +275,6 @@
                     const selectedOption = document.querySelector(`input[name="q${questionIndex}"]:checked`);
                     const value = parseInt(selectedOption.value);
                     
-                    // Mengambil label teks, bukan angka
                     const labelText = getLabel(value);
                     answers.push(labelText);
 
@@ -297,7 +296,7 @@
                 try {
                     await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
+                        // mode: 'no-cors', // <-- THIS LINE WAS THE PROBLEM AND HAS BEEN REMOVED
                         headers: {
                             'Content-Type': 'application/json',
                         },
