@@ -18,7 +18,7 @@
             transition: all 0.5s ease-in-out;
         }
         .score-circle {
-            transition: all 0.5s ease-in-out;
+            transition: all 1s ease-in-out; /* Slower transition for better viz */
             stroke-dasharray: 283;
             stroke-dashoffset: 283;
         }
@@ -27,7 +27,14 @@
             visibility: hidden;
             height: 0;
             overflow: hidden;
+            transform: scale(0.95);
             transition: all 0.5s ease-in-out;
+        }
+         .visible-fade {
+            opacity: 1;
+            visibility: visible;
+            height: auto;
+            transform: scale(1);
         }
         .spinner {
             animation: spin 1s linear infinite;
@@ -42,7 +49,7 @@
     <div class="container mx-auto p-4 md:p-8 max-w-4xl">
 
         <!-- Google Login Container -->
-        <div id="login-container" class="form-container">
+        <div id="login-container" class="form-container visible-fade">
              <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-green-200 text-center">
                 <h1 class="text-3xl md:text-4xl font-bold text-green-800">Selamat Datang</h1>
                 <p class="mt-2 text-gray-600 mb-6">Untuk memastikan validitas data, silakan login dengan akun Google Anda untuk melanjutkan.</p>
@@ -151,6 +158,7 @@
             try {
                 return JSON.parse(atob(token.split('.')[1]));
             } catch (e) {
+                console.error("Failed to parse JWT:", e);
                 return null;
             }
         }
@@ -170,8 +178,12 @@
                 respondentData.email = profile.email;
 
                 // Hide login and show user info form
+                document.getElementById('login-container').classList.remove('visible-fade');
                 document.getElementById('login-container').classList.add('hidden-fade');
                 document.getElementById('user-info-container').classList.remove('hidden-fade');
+                document.getElementById('user-info-container').classList.add('visible-fade');
+            } else {
+                alert("Login Gagal. Silakan coba lagi.");
             }
         }
 
@@ -199,8 +211,10 @@
                     respondentData.nim = document.getElementById('nim').value;
                     respondentData.angkatan = document.getElementById('angkatan').value;
                     
+                    userInfoContainer.classList.remove('visible-fade');
                     userInfoContainer.classList.add('hidden-fade');
                     mainContentContainer.classList.remove('hidden-fade');
+                    mainContentContainer.classList.add('visible-fade');
 
                 } else {
                     userInfoError.classList.remove('hidden');
@@ -225,35 +239,33 @@
             questions.forEach((q, index) => {
                 const questionIndex = index + 1;
                 const questionElement = document.createElement('div');
-                questionElement.className = 'p-4 rounded-lg border border-gray-200 hover:bg-gray-50';
+                questionElement.className = 'p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200';
                 
                 let optionsHTML = '';
-                for (let i = 1; i <= 5; i++) {
-                    optionsHTML += `
-                        <label for="q${questionIndex}-${i}" class="flex items-center justify-start cursor-pointer p-2 rounded hover:bg-green-50">
-                            <input type="radio" id="q${questionIndex}-${i}" name="q${questionIndex}" value="${i}" required class="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300">
-                            <span class="ml-3 text-sm">${getLabel(i)}</span>
+                const scale = [
+                    { value: 1, label: 'Sangat Tidak Setuju' },
+                    { value: 2, label: 'Tidak Setuju' },
+                    { value: 3, label: 'Netral' },
+                    { value: 4, label: 'Setuju' },
+                    { value: 5, label: 'Sangat Setuju' }
+                ];
+
+                scale.forEach(item => {
+                     optionsHTML += `
+                        <label for="q${questionIndex}-${item.value}" class="flex items-center justify-start cursor-pointer p-2 rounded hover:bg-green-50">
+                            <input type="radio" id="q${questionIndex}-${item.value}" name="q${questionIndex}" value="${item.value}" required class="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300">
+                            <span class="ml-3 text-sm">${item.label}</span>
                         </label>
                     `;
-                }
+                });
 
                 questionElement.innerHTML = `
                     <p class="font-medium text-gray-700 mb-2">${questionIndex}. ${q.text}</p>
-                    <div class="space-y-1">${optionsHTML}</div>
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2">${optionsHTML}</div>
                 `;
                 questionsContainer.appendChild(questionElement);
             });
             
-            function getLabel(value) {
-                switch(value) {
-                    case 1: return 'Sangat Tidak Setuju';
-                    case 2: return 'Tidak Setuju';
-                    case 3: return 'Netral';
-                    case 4: return 'Setuju';
-                    case 5: return 'Sangat Setuju';
-                }
-            }
-
             susForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 susErrorMessage.classList.add('hidden');
@@ -268,6 +280,7 @@
 
                 let score = 0;
                 const answers = [];
+                const rawScores = [];
 
                 for (let i = 0; i < questions.length; i++) {
                     const questionIndex = i + 1;
@@ -275,8 +288,7 @@
                     const selectedOption = document.querySelector(`input[name="q${questionIndex}"]:checked`);
                     const value = parseInt(selectedOption.value);
                     
-                    const labelText = getLabel(value);
-                    answers.push(labelText);
+                    rawScores.push(value); // Simpan skor mentah
 
                     if (questionType === 'odd') {
                         score += (value - 1);
@@ -288,26 +300,41 @@
                 const finalScore = score * 2.5;
                 
                 const submissionData = {
-                    ...respondentData,
+                    timestamp: new Date().toISOString(),
+                    nama: respondentData.nama,
+                    email: respondentData.email,
+                    nim: respondentData.nim,
+                    angkatan: respondentData.angkatan,
                     susScore: finalScore,
-                    answers: answers
+                    answers: rawScores // Kirim skor mentah (angka 1-5)
                 };
 
                 try {
-                    await fetch(SCRIPT_URL, {
+                    // --- PERBAIKAN UTAMA DI SINI ---
+                    // Mengirim data sebagai JSON payload, bukan FormData
+                    const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify(submissionData),
+                        mode: 'no-cors', // Diperlukan jika skrip tidak menangani preflight CORS
+                        cache: 'no-cache',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({submissionData: submissionData}), // Bungkus dalam objek
                     });
+                    // Karena mode 'no-cors', kita tidak bisa membaca response, jadi kita anggap berhasil
                 } catch (error) {
                     console.error('Error submitting to Google Sheets:', error);
+                    // Tambahkan notifikasi error untuk pengguna jika perlu
                 } finally {
                     displayResult(finalScore);
                 }
             });
 
             function displayResult(score) {
+                mainContentContainer.classList.remove('visible-fade');
                 mainContentContainer.classList.add('hidden-fade');
                 resultCard.classList.remove('hidden-fade');
+                resultCard.classList.add('visible-fade');
                 resultCard.innerHTML = `
                     <h2 class="text-2xl font-bold text-center text-green-800 mb-2">Terima Kasih!</h2>
                     <p class="text-center text-gray-600 mb-6">Jawaban Anda telah berhasil direkam. Berikut adalah hasil skor usability-nya.</p>
@@ -337,13 +364,17 @@
                 const scorePercentile = document.getElementById('score-percentile');
 
                 let currentScore = 0;
+                const targetScore = parseFloat(score.toFixed(1));
+                const increment = targetScore / 100;
+
                 const interval = setInterval(() => {
-                    if (currentScore >= score) {
+                    currentScore += increment;
+                    if (currentScore >= targetScore) {
                         clearInterval(interval);
-                        scoreText.textContent = score.toFixed(1);
-                        finalScoreEl.textContent = score.toFixed(1);
+                        currentScore = targetScore;
+                        scoreText.textContent = targetScore;
+                        finalScoreEl.textContent = targetScore;
                     } else {
-                        currentScore = Math.min(currentScore + 1, score);
                         scoreText.textContent = Math.round(currentScore);
                         finalScoreEl.textContent = Math.round(currentScore);
                     }
