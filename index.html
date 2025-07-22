@@ -98,13 +98,13 @@
     </div>
 
     <script>
-        // --- GANTI DENGAN URL DEPLOYMENT BARU ANDA JIKA ADA ---
+        // PASTIKAN URL INI SESUAI DENGAN URL DEPLOYMENT ANDA
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5QujChdHnlOEzeHoAdh2xvGy_9Y5N_C7iqnZckrH-2gDSq2vZdoXdFFI4jVA7VQqy/exec';
 
-        // --- Global Variables ---
+        // Global Variables
         let respondentData = {};
 
-        // --- Helper function to parse JWT ---
+        // Helper function to parse JWT
         function parseJwt(token) {
             try {
                 return JSON.parse(atob(token.split('.')[1]));
@@ -113,7 +113,7 @@
             }
         }
 
-        // --- Google Sign-In Callback ---
+        // Google Sign-In Callback
         function handleCredentialResponse(response) {
             const credential = response.credential;
             const profile = parseJwt(credential);
@@ -123,7 +123,6 @@
                 respondentData.nama = profile.name;
                 respondentData.email = profile.email;
 
-                // --- PERUBAHAN ALUR ---
                 // Langsung tampilkan kuesioner setelah login berhasil
                 document.getElementById('login-container').classList.remove('visible-fade');
                 document.getElementById('login-container').classList.add('hidden-fade');
@@ -143,42 +142,32 @@
             const questionsContainer = document.getElementById('questions-container');
 
             const questions = [
-                { text: "Saya rasa saya akan sering menggunakan sistem ini.", type: 'odd' },
-                { text: "Menurut saya, sistem ini terlalu rumit.", type: 'even' },
-                { text: "Saya pikir sistem ini mudah digunakan.", type: 'odd' },
-                { text: "Saya rasa saya akan membutuhkan bantuan teknis untuk bisa menggunakan sistem ini.", type: 'even' },
-                { text: "Menurut saya, berbagai fungsi dalam sistem ini terintegrasi dengan baik.", type: 'odd' },
-                { text: "Menurut saya, ada terlalu banyak hal yang tidak konsisten di sistem ini.", type: 'even' },
-                { text: "Saya bayangkan kebanyakan orang akan belajar menggunakan sistem ini dengan sangat cepat.", type: 'odd' },
-                { text: "Menurut saya, sistem ini sangat merepotkan saat digunakan.", type: 'even' },
-                { text: "Saya merasa sangat percaya diri saat menggunakan sistem ini.", type: 'odd' },
-                { text: "Saya perlu mempelajari banyak hal terlebih dahulu sebelum bisa menggunakan sistem ini.", type: 'even' }
+                { text: "Saya pikir bahwa saya akan lebih sering menggunakan sistem ini", type: 'odd' },
+                { text: "Saya berpendapat bahwa sistem ini tidak harus serumit ini", type: 'even' },
+                { text: "Saya pikir sistem ini mudah untuk digunakan", type: 'odd' },
+                { text: "Saya pikir bahwa saya akan membutuhkan bantuan dari orang teknis untuk dapat menggunakan sistem ini", type: 'even' },
+                { text: "Saya menemukan berbagai fungsi di sistem ini terintegrasi dengan baik", type: 'odd' },
+                { text: "Saya pikir ada terlalu banyak ketidak sesuaian dalam aplikasi ini", type: 'even' },
+                { text: "Saya beranggapan bahwa kebanyakan orang akan mempelajari cara mempelajari sistem ini dengan sangat cepat", type: 'odd' },
+                { text: "Saya berpendapat sistem ini sangat rumit untuk digunakan", type: 'even' },
+                { text: "Saya merasa sangat percaya diri untuk menggunakan sistem ini", type: 'odd' },
+                { text: "Saya perlu belajar banyak hal sebelum bisa memulai menggunakan sistem ini", type: 'even' }
             ];
 
             // Generate questions HTML
             questions.forEach((q, index) => {
-                const questionIndex = index + 1;
                 const questionElement = document.createElement('div');
-                questionElement.className = 'p-4 rounded-lg border border-gray-200 hover:bg-gray-50';
+                questionElement.className = 'p-4 rounded-lg border border-gray-200';
                 
-                let optionsHTML = '';
-                const scale = [
-                    { value: 1, label: '1' },
-                    { value: 2, label: '2' },
-                    { value: 3, label: '3' },
-                    { value: 4, label: '4' },
-                    { value: 5, label: '5' }
-                ];
-
-                optionsHTML += '<div class="flex items-center justify-around w-full mt-2">';
-                scale.forEach(item => {
+                let optionsHTML = '<div class="flex items-center justify-around w-full mt-2">';
+                for(let i = 1; i <= 5; i++) {
                      optionsHTML += `
-                        <label for="q${questionIndex}-${item.value}" class="flex flex-col items-center cursor-pointer p-2 rounded hover:bg-green-50">
-                            <span class="text-sm font-medium">${item.label}</span>
-                            <input type="radio" id="q${questionIndex}-${item.value}" name="q${questionIndex}" value="${item.value}" required class="h-5 w-5 mt-1 text-green-600 focus:ring-green-500 border-gray-300">
+                        <label for="q${index + 1}-${i}" class="flex flex-col items-center cursor-pointer p-2 rounded hover:bg-green-50">
+                            <span class="text-sm font-medium">${i}</span>
+                            <input type="radio" id="q${index + 1}-${i}" name="q${index + 1}" value="${i}" required class="h-5 w-5 mt-1 text-green-600 focus:ring-green-500 border-gray-300">
                         </label>
                     `;
-                });
+                }
                 optionsHTML += '</div>';
 
                 questionElement.innerHTML = `
@@ -204,9 +193,8 @@
                 const rawScores = [];
 
                 for (let i = 0; i < questions.length; i++) {
-                    const questionIndex = i + 1;
                     const questionType = questions[i].type;
-                    const selectedOption = document.querySelector(`input[name="q${questionIndex}"]:checked`);
+                    const selectedOption = document.querySelector(`input[name="q${i + 1}"]:checked`);
                     const value = parseInt(selectedOption.value);
                     
                     rawScores.push(value); 
@@ -220,6 +208,7 @@
 
                 const finalScore = score * 2.5;
                 
+                // Data yang dikirim sudah tidak mengandung NIM dan Angkatan
                 const submissionData = {
                     timestamp: new Date().toISOString(),
                     nama: respondentData.nama,
@@ -243,7 +232,6 @@
                 }
             });
 
-            // --- PERUBAHAN TAMPILAN HASIL ---
             function displayResult(score, rawScores) {
                 mainContentContainer.classList.remove('visible-fade');
                 mainContentContainer.classList.add('hidden-fade');
@@ -285,10 +273,8 @@
                 `;
                 
                 let adjective = '';
-                if (score > 80.3) { adjective = 'Sangat Baik'; } 
-                else if (score > 68) { adjective = 'Baik'; }
-                else if (score > 52) { adjective = 'Cukup'; }
-                else { adjective = 'Buruk'; }
+                if (score >= 68) { adjective = 'Acceptable'; } 
+                else { adjective = 'Not Acceptable'; }
                 document.getElementById('score-adjective').textContent = adjective;
             }
         });
